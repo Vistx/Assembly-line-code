@@ -34,7 +34,7 @@ byte Servo1_sequence[]={0,40,0,80,0,120,0,160,0,180};
 byte Servo2_sequence[]={0,40,0,80,0,120,0,160,0,180};
 byte Servo3_sequence[]={0,40,0,80,0,120,0,160,0,180};
 byte p=0; // sequence step180
-  
+byte machine_step=0;
 
 
 
@@ -43,18 +43,10 @@ void Task2code( void * pvParameters ){
 
   for(;;){
 
-   int state = digitalRead(Proximity_SENSOR_PIN);
-
-  if (state == LOW){
-    
-digitalWrite(RELAY_PIN,LOW);
-  }else{
-       
-       digitalWrite(RELAY_PIN,HIGH);
-  }
+   
     
 
-  //delay(100);
+  
   }
 }
 
@@ -69,10 +61,43 @@ void Task1code( void * pvParameters ){
   
 
   for(;;){
-    if(p>=10){p=0;}
+  
+    
   unsigned long currentMillis = millis();
 
 
+
+
+
+
+switch(machine_step){
+   case 0: /*---------------------------------------------------------------------------------------------------*/
+
+   bool state = digitalRead(Proximity_SENSOR_PIN);
+
+  if (state == LOW){
+    
+digitalWrite(RELAY_PIN,LOW);
+  }else{
+       
+       digitalWrite(RELAY_PIN,HIGH);
+  }
+
+ 
+   break;/*---------------------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+    case 1 :
+
+      /*---------------------------------------------------------------------------------------------------*/
+
+      if(p>=10){p=0;}
   if (currentMillis - previousMillis >= interval) {
 
     previousMillis = currentMillis;
@@ -107,7 +132,7 @@ for (byte i = 0; i < 4; i++)
 if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived_todestination[2]&&servo_arvived_todestination[3]){
   p++;
       Serial.println("------------------");
-  delay(500);
+            delay(500);
       for(byte i=0;i<4;i++){
         
         Serial.println(myservo_courrent[i]);
@@ -115,6 +140,33 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 }
 
 
+/*---------------------------------------------------------------------------------------------*/
+
+      break;
+
+
+
+
+
+    case 2 :
+
+
+
+
+
+      break;
+
+
+}
+
+    
+
+
+
+
+
+
+//------------------ending bracket----------------------------
   } 
 }
 
