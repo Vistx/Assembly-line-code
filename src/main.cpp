@@ -22,7 +22,7 @@ unsigned long  previousMillis1 = 0;
  
  const long interval = 10;
  const long interval2 = 1500;
-
+bool runn_once = true;
 
 uint8_t pca_servo_ports[4]={0,4,8,12};
 byte myservo_courrent[4] ={90,90,90,90};
@@ -65,26 +65,40 @@ void Task1code( void * pvParameters ){
     
   unsigned long currentMillis = millis();
 
+if(runn_once){
+  val[0]= myservo_courrent[0];
+   val[1]= myservo_courrent[1];
+   val[2]= myservo_courrent[2];
+   val[3]= myservo_courrent[3];
+   for (byte i = 0; i < 4; i++)
+  {
+    
+    pwm_signal[i]=map(val[i], 0, 180, SERVOMIN, SERVOMAX);
+    pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
+  }
 
+  runn_once=false;
+}
 
 
 
 
 switch(machine_step){
-   case 0: /*---------------------------------------------------------------------------------------------------*/
+   case 0 :{ /*---------------------------------------------------------------------------------------------------*/
 
-   bool state = digitalRead(Proximity_SENSOR_PIN);
+        int state = digitalRead(Proximity_SENSOR_PIN);
 
-  if (state == LOW){
-    
-digitalWrite(RELAY_PIN,LOW);
-  }else{
-       
-       digitalWrite(RELAY_PIN,HIGH);
-  }
-
+               if (state == LOW){
+               
+                digitalWrite(RELAY_PIN,LOW);
+                machine_step++;
+             }else{
+                  
+                  digitalWrite(RELAY_PIN,HIGH);
+             }
+           
  
-   break;/*---------------------------------------------------------------------------------------------------*/
+   }break;/*---------------------------------------------------------------------------------------------------*/
 
 
 
@@ -93,11 +107,11 @@ digitalWrite(RELAY_PIN,LOW);
 
 
 
-    case 1 :
+    case 1 :{
 
       /*---------------------------------------------------------------------------------------------------*/
 
-      if(p>=10){p=0;}
+      if(p>=10){p=0;machine_step++;}
   if (currentMillis - previousMillis >= interval) {
 
     previousMillis = currentMillis;
@@ -142,20 +156,26 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 
 /*---------------------------------------------------------------------------------------------*/
 
-      break;
+      }break;
 
 
 
 
 
-    case 2 :
+    case 2 :{
+
+       digitalWrite(RELAY_PIN,HIGH);
 
 
 
+    }break;
+
+    default:{
+      machine_step=0;
+    }
 
 
-      break;
-
+    
 
 }
 
@@ -182,17 +202,7 @@ void setup() {
 
   // Set PWM Frequency to 50Hz
   pca9685.setPWMFreq(50);
-   val[0]= myservo_courrent[0];
-   val[1]= myservo_courrent[1];
-   val[2]= myservo_courrent[2];
-   val[3]= myservo_courrent[3];
-   for (byte i = 0; i < 4; i++)
-  {
-    
-    pwm_signal[i]=map(val[i], 0, 180, SERVOMIN, SERVOMAX);
-    pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
-  }
-
+   
   //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
   xTaskCreatePinnedToCore(
                     Task1code,   /* Task function. */
