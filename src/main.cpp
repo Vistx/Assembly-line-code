@@ -42,6 +42,7 @@ void Task2code( void * pvParameters ){
   
 
   for(;;){
+    vTaskDelay(10);  //https://rntlab.com/question/error-task-watchdog-got-triggered/
 
    
     
@@ -62,24 +63,8 @@ void Task1code( void * pvParameters ){
 
   for(;;){
   
-    
+    vTaskDelay(10);               //https://rntlab.com/question/error-task-watchdog-got-triggered/
   unsigned long currentMillis = millis();
-
-if(runn_once){
-  val[0]= myservo_courrent[0];
-   val[1]= myservo_courrent[1];
-   val[2]= myservo_courrent[2];
-   val[3]= myservo_courrent[3];
-   for (byte i = 0; i < 4; i++)
-  {
-    
-    pwm_signal[i]=map(val[i], 0, 180, SERVOMIN, SERVOMAX);
-    pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
-  }
-
-  runn_once=false;
-}
-
 
 
 
@@ -166,16 +151,16 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 
        digitalWrite(RELAY_PIN,HIGH);
 
-
+       vTaskDelay(1000 / portTICK_RATE_MS);
+       machine_step=0;
 
     }break;
 
     default:{
-      machine_step=0;
+       
+      
     }
 
-
-    
 
 }
 
@@ -195,10 +180,21 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 
 
 void setup() { 
+  
   Serial.begin(115200);
   pca9685.begin();
   pinMode(Proximity_SENSOR_PIN, INPUT);
   pinMode(RELAY_PIN, OUTPUT);
+  val[0]= myservo_courrent[0];
+   val[1]= myservo_courrent[1];
+   val[2]= myservo_courrent[2];
+   val[3]= myservo_courrent[3];
+   for (byte i = 0; i < 4; i++)
+  {
+    
+    pwm_signal[i]=map(val[i], 0, 180, SERVOMIN, SERVOMAX);
+    pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
+  }
 
   // Set PWM Frequency to 50Hz
   pca9685.setPWMFreq(50);
