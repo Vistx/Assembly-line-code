@@ -71,7 +71,7 @@ void Task1code( void * pvParameters ){
 switch(machine_step){
    case 0 :{ /*---------------------------------------------------------------------------------------------------*/
 
-        int state = digitalRead(Proximity_SENSOR_PIN);
+        bool state = digitalRead(Proximity_SENSOR_PIN);
 
                if (state == LOW){
                
