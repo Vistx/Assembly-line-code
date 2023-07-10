@@ -8,6 +8,7 @@
 #define SERVOMAX  530  // Maximum value
 #define Proximity_SENSOR_PIN 18
 #define RELAY_PIN 5
+#define RELAY_PIN2 19
 
 
 
@@ -155,12 +156,22 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 
        digitalWrite(RELAY_PIN,HIGH);
 
+         bool state = digitalRead(Proximity_SENSOR_PIN);
+
+               if (state == HIGH){
+               digitalWrite(RELAY_PIN,LOW);
+                digitalWrite(LED_BUILTIN,HIGH);
+                machine_step++;
+             }
+           
+
        vTaskDelay(1000 / portTICK_RATE_MS);
-       machine_step=0;
+       
 
     }break;
 
     default:{
+      machine_step=0;
        
       
     }
