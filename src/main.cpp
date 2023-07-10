@@ -19,10 +19,13 @@ TaskHandle_t Task2;
 
 unsigned long  previousMillis = 0;
 unsigned long  previousMillis1 = 0;
- 
- const long interval = 10;
- const long interval2 = 1500;
+const long interval = 10;
+const long interval2 = 1500;
 bool runn_once = true;
+byte p=0; // sequence step180
+byte machine_step=0;
+
+
 
 uint8_t pca_servo_ports[4]={0,4,8,12};
 byte myservo_courrent[4] ={90,90,90,90};
@@ -33,8 +36,9 @@ byte Servo_sequence[]= {0,40,0,80,0,120,0,160,0,180};
 byte Servo1_sequence[]={0,40,0,80,0,120,0,160,0,180};
 byte Servo2_sequence[]={0,40,0,80,0,120,0,160,0,180};
 byte Servo3_sequence[]={0,40,0,80,0,120,0,160,0,180};
-byte p=0; // sequence step180
-byte machine_step=0;
+
+
+
 
 
 
