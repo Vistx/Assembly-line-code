@@ -163,15 +163,16 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
                 digitalWrite(LED_BUILTIN,HIGH);
                 machine_step++;
              }
-           
+           digitalWrite(LED_BUILTIN,HIGH);
 
        vTaskDelay(1000 / portTICK_RATE_MS);
+       digitalWrite(LED_BUILTIN,LOW);
        
 
     }break;
 
     default:{
-      machine_step=0;
+      // machine_step=0;
        
       
     }
@@ -200,6 +201,7 @@ void setup() {
   pca9685.begin();
   pinMode(Proximity_SENSOR_PIN, INPUT);
   pinMode(RELAY_PIN, OUTPUT);
+  pinMode(LED_BUILTIN,OUTPUT);
   val[0]= myservo_courrent[0];
    val[1]= myservo_courrent[1];
    val[2]= myservo_courrent[2];
