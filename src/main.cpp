@@ -75,11 +75,11 @@ switch(machine_step){
 
                if (state == LOW){
                
-                digitalWrite(RELAY_PIN,LOW);
+                digitalWrite(RELAY_PIN,HIGH);
                 machine_step++;
              }else{
                   
-                  digitalWrite(RELAY_PIN,HIGH);
+                  digitalWrite(RELAY_PIN,LOW);
              }
            
  
