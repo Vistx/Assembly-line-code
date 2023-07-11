@@ -39,7 +39,12 @@ byte Servo2_sequence[]={0,40,0,80,0,120,0,160,0,180};
 byte Servo3_sequence[]={0,40,0,80,0,120,0,160,0,180};
 
 
-
+void conveyer_relay_on(){
+  digitalWrite(RELAY_PIN,HIGH);
+}
+void conveyer_relay_off(){
+  digitalWrite(RELAY_PIN,LOW);
+}
 
 
 
@@ -80,11 +85,11 @@ switch(machine_step){
 
                if (state == LOW){
                
-                digitalWrite(RELAY_PIN,HIGH);
+                conveyer_relay_on();
                 machine_step++;
              }else{
                   
-                  digitalWrite(RELAY_PIN,LOW);
+                  conveyer_relay_off();
              }
            
  
@@ -154,26 +159,28 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 
     case 2 :{
 
-       digitalWrite(RELAY_PIN,HIGH);
 
          bool state = digitalRead(Proximity_SENSOR_PIN);
 
-               if (state == HIGH){
-               digitalWrite(RELAY_PIN,LOW);
+               if (state == LOW){
+               
+               conveyer_relay_on();
                 digitalWrite(LED_BUILTIN,HIGH);
                 machine_step++;
+                Serial.println("on");
+             }else
+             {
+              conveyer_relay_off();
+              Serial.println("off");
+              machine_step=2;
              }
-           digitalWrite(LED_BUILTIN,HIGH);
-
-       vTaskDelay(1000 / portTICK_RATE_MS);
-       digitalWrite(LED_BUILTIN,LOW);
+             
        
-
     }break;
 
     default:{
-      // machine_step=0;
-       
+       machine_step=0;
+      
       
     }
 
