@@ -15,6 +15,7 @@
 
 
 Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver(0x40);
+DeltaKinematics DK(70,300,139,112);
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 
@@ -25,7 +26,9 @@ const long interval2 = 1500;
 bool runn_once = true;
 byte p=0; // sequence step180
 byte machine_step=0;
-
+short delta_x_pos[]={};
+short delta_y_pos[]={};
+short delta_z_pos[]={};
 
 
 uint8_t pca_servo_ports[4]={0,4,8,12};
@@ -38,6 +41,8 @@ byte Servo1_sequence[]={0,40,0,80,0,120,0,160,0,180};
 byte Servo2_sequence[]={0,40,0,80,0,120,0,160,0,180};
 byte Servo3_sequence[]={0,40,0,80,0,120,0,160,0,180};
 
+/*<-----Funksionet----->*/
+
 
 void conveyer_relay_on(){
   digitalWrite(RELAY_PIN,HIGH);
@@ -47,24 +52,31 @@ void conveyer_relay_off(){
 }
 
 
+void Delta_robot_kinematic_logic(){
+
+  for (size_t i = 0; i <  sizeof(delta_x_pos) / sizeof(short); i++)
+  {
+    DK.inverse(delta_x_pos[i],delta_y_pos[i],delta_z_pos[i]);
+    delay(200);
+  }
+  
+  
+
+}
+
+/*<-----Funksionet----->*/
 
 void Task2code( void * pvParameters ){
   
 
   for(;;){
+
+
+
     vTaskDelay(10);  //https://rntlab.com/question/error-task-watchdog-got-triggered/
-
-   
-    
-
   
   }
 }
-
-
-
-
-
 
 
 
@@ -144,7 +156,7 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
             delay(500);
       for(byte i=0;i<4;i++){
         
-        Serial.println(myservo_courrent[i]);
+        Serial.println(myservo_courrent[i]);    
       }
 }
 
