@@ -2,6 +2,7 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <DeltaKinematics.h>
 #include <LiquidCrystal_I2C.h>
+#include <IRremote.h>
 
  
 #define PWM_Module_I2C 0X40
@@ -16,20 +17,12 @@
 #define RELAY_PIN2 19 //relay pin
 
 
-
-
-
-
-
-
-
-
 Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver(PWM_Module_I2C);
 LiquidCrystal_I2C lcd(0x3F, lcd_Columns, lcd_Rows);
 DeltaKinematics DK(70,300,139,112);
 TaskHandle_t Task1;
 TaskHandle_t Task2;
-
+decode_results results;
 
 
 unsigned long  previousMillis = 0;
@@ -37,7 +30,11 @@ unsigned long  previousMillis1 = 0;
 const long interval = 10;
 const long interval2 = 1500;
 bool runn_once = true;
-byte p=0; // sequence step180
+int menory_address=0;
+byte p=0,    ir_arr_pos=0; // sequence step180
+byte value[]={0,0,0,0,0,0};// ir value array
+
+
 byte machine_step=0;
 short delta_x_pos[]={};
 short delta_y_pos[]={};
@@ -73,17 +70,165 @@ void Delta_robot_kinematic_logic(){
     delay(200);
   }
   
-  
+
 
 }
 
+void writeEEPROM(int address, byte val, int i2c_address)
+{
+  // Begin transmission to I2C EEPROM
+  Wire.beginTransmission(i2c_address);
+ 
+  // Send memory address as two 8-bit bytes
+  Wire.write((int)(address >> 8));   // MSB
+  Wire.write((int)(address & 0xFF)); // LSB
+ 
+  // Send data to be stored
+  Wire.write(val);
+ 
+  // End the transmission
+  Wire.endTransmission();
+ 
+  // Add 5ms delay for EEPROM
+  delay(5);
+}
+
+byte readEEPROM(int address, int i2c_address)
+{
+  // Define byte for received data
+  byte rcvData = 0xFF;
+ 
+  // Begin transmission to I2C EEPROM
+  Wire.beginTransmission(i2c_address);
+ 
+  // Send memory address as two 8-bit bytes
+  Wire.write((int)(address >> 8));   // MSB
+  Wire.write((int)(address & 0xFF)); // LSB
+ 
+  // End the transmission
+  Wire.endTransmission();
+ 
+  // Request one byte of data at current memory address
+  Wire.requestFrom(i2c_address, 1);
+ 
+  // Read the data and assign to variable
+  rcvData =  Wire.read();
+ 
+  // Return the data as function output
+  return rcvData;
+}
+   
+   void Ir_remote_programming(){
+  lcd.setCursor(0, 1);
+     lcd.print(value[ir_arr_pos]);
+     lcd.print(" ");  // to remove 0 bug
+
+
+if (IrReceiver.decode()){
+        // Serial.println(IrReceiver.decodedIRData.decodedRawData,HEX);
+        Serial.println("Courrent Servo"+ String(p)+" value:" + String(value[ir_arr_pos]));
+        
+   
+
+
+       switch (IrReceiver.decodedIRData.decodedRawData)
+       {
+       case 0x80 :{
+
+        Serial.println("Button is pressed");
+      Serial.println("Saved Servo Values: " + String(value[ir_arr_pos]));
+      Serial.println("Courrent Saving addr:" + String(menory_address) + "-" +String(menory_address+6));
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Saved To memory" );
+      lcd.setCursor(0,1);
+      lcd.print("Adress: "+ String(menory_address)+ "-" +String(menory_address+6) );
+      delay(1500);
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("S"+String(p)+": ");
+      digitalWrite(LED_BUILTIN,HIGH);
+      if (menory_address<150)
+      {
+        for (size_t i = 0; i < 6; i++)
+        {
+          writeEEPROM(menory_address+i , value[i], EEPROM_I2C_ADDRESS);
+        } 
+        menory_address=menory_address+6;
+      }else{
+        Serial.println("Memory filled from 0-149");
+      }
+      
+      delay(250);
+      digitalWrite(LED_BUILTIN,LOW);
+
+       }
+       break;
+       case 0x2A12 :{
+        if (value[ir_arr_pos]<180)
+        {
+          value[ir_arr_pos]=value[ir_arr_pos]+1;
+          delay(150);
+        }
+       }break;
+
+      case 0x2A13 :{
+        if (value[ir_arr_pos]>0)
+        {
+          value[ir_arr_pos]=value[ir_arr_pos]-1;
+          delay(150);
+        }
+      }break;
+      case 0x2A33 :{
+       if (p<5)
+       {
+        p++;
+        delay(250);
+       }
+       lcd.clear();
+       lcd.setCursor(0,0);
+      lcd.print("S"+String(p)+": ");
+        
+      }break;
+
+      case 0x2A34 :{
+        if (p>0)
+        {
+          p--;
+          delay(250);
+        }
+         lcd.clear();
+       lcd.setCursor(0,0);
+      lcd.print("S"+String(p)+": ");
+      }break;
+
+
+
+
+       default:
+        break;
+       }
+
+                                                            // if (IrReceiver.decodedIRData.decodedRawData==0x80){}
+        
+        IrReceiver.resume();
+  }
+
+
+
+
+}
+
+   
+   
+   
 /*<-----Funksionet----->*/
 
 void Task2code( void * pvParameters ){
   
 
   for(;;){
-
+    
 
 
     vTaskDelay(10);  //https://rntlab.com/question/error-task-watchdog-got-triggered/
@@ -231,18 +376,32 @@ void setup() {
   
   Serial.begin(115200);
   pca9685.begin();
+  IrReceiver.begin(PIN_RECV);
+  lcd.init();
+
+
+  lcd.backlight();
+  lcd.setCursor(0,0);
+  lcd.print("S"+String(p)+": ");
+
+
   pinMode(Proximity_SENSOR_PIN, INPUT);
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(LED_BUILTIN,OUTPUT);
-  val[0]= myservo_courrent[0];
-   val[1]= myservo_courrent[1];
-   val[2]= myservo_courrent[2];
-   val[3]= myservo_courrent[3];
+
+  for (byte i = 0; i < 4; i++)
+  {
+  val[i]= myservo_courrent[i];
+  }
+  
+  
    for (byte i = 0; i < 4; i++)
   {
     
     pwm_signal[i]=map(val[i], 0, 180, SERVOMIN, SERVOMAX);
     pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
+  
+  
   }
 
   // Set PWM Frequency to 50Hz
