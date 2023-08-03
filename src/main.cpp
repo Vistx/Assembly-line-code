@@ -1,23 +1,36 @@
 #include <Arduino.h>
 #include <Adafruit_PWMServoDriver.h>
 #include <DeltaKinematics.h>
+#include <LiquidCrystal_I2C.h>
 
  
-
+#define PWM_Module_I2C 0X40
+#define EEPROM_I2C_ADDRESS 0x50
 #define SERVOMIN  115 // Minimum value
 #define SERVOMAX  530  // Maximum value
-#define Proximity_SENSOR_PIN 18
-#define RELAY_PIN 5
-#define RELAY_PIN2 19
+#define lcd_Columns 16
+#define lcd_Rows 2
+#define Proximity_SENSOR_PIN 18 
+#define PIN_RECV 4 //ir module recieve pin
+#define RELAY_PIN 5 //relay pin
+#define RELAY_PIN2 19 //relay pin
 
 
 
 
 
-Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver(0x40);
+
+
+
+
+
+Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver(PWM_Module_I2C);
+LiquidCrystal_I2C lcd(0x3F, lcd_Columns, lcd_Rows);
 DeltaKinematics DK(70,300,139,112);
 TaskHandle_t Task1;
 TaskHandle_t Task2;
+
+
 
 unsigned long  previousMillis = 0;
 unsigned long  previousMillis1 = 0;
