@@ -48,7 +48,7 @@ int val[4]={90,90,90,90};
 bool servo_arvived_todestination[4]={true,true,true,true};
 byte Servo_sequence[]= {0,40,0,80,0,120,0,160,0,180};
 byte Servo1_sequence[]={0,40,0,80,0,120,0,160,0,180};
-byte Servo2_sequence[]={0,40,0,80,0,120,0,160,0,180};
+byte Servo2_sequence[]={0,20,0,80,0,135,0,160,0,180};
 byte Servo3_sequence[]={0,40,0,80,0,120,0,160,0,180};
 
 /*<-----Funksionet----->*/
@@ -220,7 +220,21 @@ if (IrReceiver.decode()){
 }
 
    
-   
+   void _4dof_servo_movement(byte i,byte* _Servo_sequence ){ //https://www.tutorialspoint.com/how-to-pass-an-array-by-reference-in-cplusplus
+    if(myservo_courrent[i]-*_Servo_sequence>0){
+        myservo_courrent[i]--;
+        servo_arvived_todestination[i]=false;
+
+
+      }else if(myservo_courrent[i]-*_Servo_sequence<0){
+
+        myservo_courrent[i]++;
+        servo_arvived_todestination[i]=false;
+      }else{
+              servo_arvived_todestination[i]=true;
+      }   
+
+   }
    
 /*<-----Funksionet----->*/
 
@@ -280,24 +294,15 @@ switch(machine_step){
   if (currentMillis - previousMillis >= interval) {
 
     previousMillis = currentMillis;
-    for (byte i = 0; i < 4; i++)
-  {
- 
-      if(myservo_courrent[i]-Servo_sequence[p]>0){
-        myservo_courrent[i]--;
-        servo_arvived_todestination[i]=false;
+   
+  
+      _4dof_servo_movement(0,&Servo_sequence[p]);
+      _4dof_servo_movement(1,&Servo1_sequence[p]);
+      _4dof_servo_movement(2,&Servo2_sequence[p]);
+      _4dof_servo_movement(3,&Servo3_sequence[p]);
 
-
-      }else if(myservo_courrent[i]-Servo_sequence[p]<0){
-
-        myservo_courrent[i]++;
-        servo_arvived_todestination[i]=false;
-      }else{
-
-              myservo_courrent[i]=myservo_courrent[i];
-              servo_arvived_todestination[i]=true;
-      }   
-  }
+  
+  
  }
 
 for (byte i = 0; i < 4; i++)
@@ -309,6 +314,11 @@ for (byte i = 0; i < 4; i++)
 
 
 if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived_todestination[2]&&servo_arvived_todestination[3]){
+  for(byte i=0;i<4;i++){
+        
+        servo_arvived_todestination[i]=false;    
+      }
+  
   p++;
       Serial.println("------------------");
             delay(500);
@@ -382,7 +392,7 @@ void setup() {
 
   lcd.backlight();
   lcd.setCursor(0,0);
-  lcd.print("S"+String(p)+": ");
+  lcd.print("S"+String(ir_arr_pos)+": ");
 
 
   pinMode(Proximity_SENSOR_PIN, INPUT);
