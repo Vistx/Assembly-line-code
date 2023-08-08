@@ -27,7 +27,7 @@ decode_results results;
 
 unsigned long  previousMillis = 0;
 unsigned long  previousMillis1 = 0;
-const long interval = 10;
+const long interval = 30;
 const long interval2 = 1500;
 bool runn_once = true;
 int menory_address=0;
@@ -118,8 +118,8 @@ byte readEEPROM(int address, int i2c_address)
   return rcvData;
 }
    
-   void Ir_remote_programming(){
-  lcd.setCursor(0, 1);
+void Ir_remote_programming(){
+     lcd.setCursor(0, 1);
      lcd.print(value[ir_arr_pos]);
      lcd.print(" ");  // to remove 0 bug
 
@@ -135,7 +135,7 @@ if (IrReceiver.decode()){
        {
        case 0x80 :{
 
-        Serial.println("Button is pressed");
+      Serial.println("Button is pressed");
       Serial.println("Saved Servo Values: " + String(value[ir_arr_pos]));
       Serial.println("Courrent Saving addr:" + String(menory_address) + "-" +String(menory_address+6));
       lcd.clear();
@@ -148,8 +148,7 @@ if (IrReceiver.decode()){
       lcd.setCursor(0,0);
       lcd.print("S"+String(p)+": ");
       digitalWrite(LED_BUILTIN,HIGH);
-      if (menory_address<150)
-      {
+      if (menory_address<150){
         for (size_t i = 0; i < 6; i++)
         {
           writeEEPROM(menory_address+i , value[i], EEPROM_I2C_ADDRESS);
@@ -180,26 +179,26 @@ if (IrReceiver.decode()){
         }
       }break;
       case 0x2A33 :{
-       if (p<5)
+       if (ir_arr_pos<5)
        {
-        p++;
+        ir_arr_pos++;
         delay(250);
        }
        lcd.clear();
        lcd.setCursor(0,0);
-      lcd.print("S"+String(p)+": ");
+      lcd.print("S"+String(ir_arr_pos)+": ");
         
       }break;
 
       case 0x2A34 :{
-        if (p>0)
+        if (ir_arr_pos>0)
         {
-          p--;
+          ir_arr_pos--;
           delay(250);
         }
          lcd.clear();
        lcd.setCursor(0,0);
-      lcd.print("S"+String(p)+": ");
+      lcd.print("S"+String(ir_arr_pos)+": ");
       }break;
 
 
@@ -291,19 +290,15 @@ switch(machine_step){
       /*---------------------------------------------------------------------------------------------------*/
 
       if(p>=10){p=0;machine_step++;}
-  if (currentMillis - previousMillis >= interval) {
+      if (currentMillis - previousMillis >= interval) {
+      previousMillis = currentMillis;
 
-    previousMillis = currentMillis;
-   
-  
       _4dof_servo_movement(0,&Servo_sequence[p]);
       _4dof_servo_movement(1,&Servo1_sequence[p]);
       _4dof_servo_movement(2,&Servo2_sequence[p]);
       _4dof_servo_movement(3,&Servo3_sequence[p]);
+      }
 
-  
-  
- }
 
 for (byte i = 0; i < 4; i++)
   {
@@ -330,8 +325,7 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 
 
 /*---------------------------------------------------------------------------------------------*/
-
-      }break;
+     }break;
 
 
 
