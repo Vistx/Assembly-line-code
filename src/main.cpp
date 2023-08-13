@@ -3,6 +3,8 @@
 #include <DeltaKinematics.h>
 #include <LiquidCrystal_I2C.h>
 #include <IRremote.h>
+#include <ModbusRtu.h>
+
 
  
 #define PWM_Module_I2C 0X40
@@ -23,6 +25,7 @@ DeltaKinematics DK(70,300,139,112);
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 decode_results results;
+Modbus slave(1,Serial,0);
 
 
 unsigned long  previousMillis = 0;
@@ -35,21 +38,24 @@ byte p=0,    ir_arr_pos=0; // sequence step180
 byte value[]={0,0,0,0,0,0};// ir value array
 
 
+
 byte machine_step=0;
 short delta_x_pos[]={};
 short delta_y_pos[]={};
 short delta_z_pos[]={};
 
-
-uint8_t pca_servo_ports[4]={0,4,8,12};
-byte myservo_courrent[4] ={90,90,90,90};
-unsigned short int pwm_signal[4]={1,1,1,1};
-int val[4]={90,90,90,90};  
+uint16_t au16data[16] = {3, 1415, 9265, 4, 2, 7182, 28182, 8, 0, 0, 0, 0, 0, 0, 1, 1};
+byte pca_servo_ports[6]={0,4,8,12,14,15};
+byte myservo_courrent[6] ={90,90,90,90,0,0};
+unsigned short int pwm_signal[6]={1,1,1,1,1,1};
+int val[6]={90,90,90,90,0,0};  
 bool servo_arvived_todestination[4]={true,true,true,true};
-byte Servo_sequence[]= {0,40,0,80,0,120,0,160,0,180};
-byte Servo1_sequence[]={0,40,0,80,0,120,0,160,0,180};
-byte Servo2_sequence[]={0,20,0,80,0,135,0,160,0,180};
-byte Servo3_sequence[]={0,40,0,80,0,120,0,160,0,180};
+byte Servo_sequence[]=   {0,40,0,80,0,120,0,160,0,180};
+byte Servo1_sequence[]=  {0,40,0,80,0,120,0,160,0,180};
+byte Servo2_sequence[]=  {0,20,0,80,0,135,0,160,0,180};
+byte Servo3_sequence[]=  {0,40,0,80,0,120,0,160,0,180};
+byte Pump_sequence[]=    {0,110,0,110,0,110,0,110,0,110};
+byte Solenoid_sequence[]={0,180,0,180,0,180,0,180,0,180};
 
 /*<-----Funksionet----->*/
 
@@ -60,7 +66,6 @@ void conveyer_relay_on(){
 void conveyer_relay_off(){
   digitalWrite(RELAY_PIN,LOW);
 }
-
 
 void Delta_robot_kinematic_logic(){
 
@@ -211,6 +216,8 @@ if (IrReceiver.decode()){
                                                             // if (IrReceiver.decodedIRData.decodedRawData==0x80){}
         
         IrReceiver.resume();
+
+
   }
 
 
@@ -219,7 +226,7 @@ if (IrReceiver.decode()){
 }
 
    
-   void _4dof_servo_movement(byte i,byte* _Servo_sequence ){ //https://www.tutorialspoint.com/how-to-pass-an-array-by-reference-in-cplusplus
+void _4dof_servo_movement(byte i,byte* _Servo_sequence ){ //https://www.tutorialspoint.com/how-to-pass-an-array-by-reference-in-cplusplus
     if(myservo_courrent[i]-*_Servo_sequence>0){
         myservo_courrent[i]--;
         servo_arvived_todestination[i]=false;
@@ -242,7 +249,7 @@ void Task2code( void * pvParameters ){
 
   for(;;){
     
-
+  slave.poll( au16data, 16 );
 
     vTaskDelay(10);  //https://rntlab.com/question/error-task-watchdog-got-triggered/
   
@@ -297,10 +304,12 @@ switch(machine_step){
       _4dof_servo_movement(1,&Servo1_sequence[p]);
       _4dof_servo_movement(2,&Servo2_sequence[p]);
       _4dof_servo_movement(3,&Servo3_sequence[p]);
+         myservo_courrent[4]=Pump_sequence[p];
+         myservo_courrent[5]=Solenoid_sequence[p];
       }
 
 
-for (byte i = 0; i < 4; i++)
+for (byte i = 0; i < 6; i++)
   {
     
     pwm_signal[i]=map( myservo_courrent[i], 0, 180, SERVOMIN, SERVOMAX);
@@ -317,7 +326,7 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
   p++;
       Serial.println("------------------");
             delay(500);
-      for(byte i=0;i<4;i++){
+      for(byte i=0;i<6;i++){
         
         Serial.println(myservo_courrent[i]);    
       }
@@ -379,6 +388,7 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 void setup() { 
   
   Serial.begin(115200);
+  slave.start();
   pca9685.begin();
   IrReceiver.begin(PIN_RECV);
   lcd.init();
@@ -399,7 +409,7 @@ void setup() {
   }
   
   
-   for (byte i = 0; i < 4; i++)
+   for (byte i = 0; i < 6; i++)
   {
     
     pwm_signal[i]=map(val[i], 0, 180, SERVOMIN, SERVOMAX);
