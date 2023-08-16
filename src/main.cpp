@@ -35,7 +35,7 @@ const long interval2 = 1500;
 bool runn_once = true;
 int menory_address=0;
 byte p=0,    ir_arr_pos=0; // sequence step180
-byte value[]={0,0,0,0,0,0};// ir value array
+byte value[]={90,90,90,90,0,0};// ir value array
 
 
 
@@ -50,12 +50,12 @@ byte myservo_courrent[6] ={90,90,90,90,0,0};
 unsigned short int pwm_signal[6]={1,1,1,1,1,1};
 int val[6]={90,90,90,90,0,0};  
 bool servo_arvived_todestination[4]={true,true,true,true};
-byte Servo_sequence[]=   {0,40,0,80,0,120,0,160,0,180};
-byte Servo1_sequence[]=  {0,40,0,80,0,120,0,160,0,180};
-byte Servo2_sequence[]=  {0,20,0,80,0,135,0,160,0,180};
-byte Servo3_sequence[]=  {0,40,0,80,0,120,0,160,0,180};
-byte Pump_sequence[]=    {0,110,0,110,0,110,0,110,0,110};
-byte Solenoid_sequence[]={0,180,0,180,0,180,0,180,0,180};
+byte Servo_sequence[25]=   {};
+byte Servo1_sequence[25]=  {};
+byte Servo2_sequence[25]=  {};
+byte Servo3_sequence[25]=  {};
+byte Pump_sequence[25]=    {};
+byte Solenoid_sequence[25]={};
 
 /*<-----Funksionet----->*/
 
@@ -163,7 +163,7 @@ if (IrReceiver.decode()){
         Serial.println("Memory filled from 0-149");
       }
       
-      delay(250);
+      delay(50);
       digitalWrite(LED_BUILTIN,LOW);
 
        }
@@ -172,7 +172,7 @@ if (IrReceiver.decode()){
         if (value[ir_arr_pos]<180)
         {
           value[ir_arr_pos]=value[ir_arr_pos]+1;
-          delay(150);
+          delay(50);
         }
        }break;
 
@@ -180,7 +180,7 @@ if (IrReceiver.decode()){
         if (value[ir_arr_pos]>0)
         {
           value[ir_arr_pos]=value[ir_arr_pos]-1;
-          delay(150);
+          delay(50);
         }
       }break;
       case 0x2A33 :{
@@ -212,6 +212,13 @@ if (IrReceiver.decode()){
        default:
         break;
        }
+      for (byte i = 0; i < 6; i++)
+  {
+    
+    pwm_signal[i]=map( value[i], 0, 180, SERVOMIN, SERVOMAX);
+    pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
+  }
+
 
                                                             // if (IrReceiver.decodedIRData.decodedRawData==0x80){}
         
@@ -262,7 +269,7 @@ void Task1code( void * pvParameters ){
   
 
   for(;;){
-  
+  //Ir_remote_programming();
     vTaskDelay(10);               //https://rntlab.com/question/error-task-watchdog-got-triggered/
   unsigned long currentMillis = millis();
 
@@ -362,7 +369,7 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
     }break;
 
     default:{
-       machine_step=0;
+       continue;
       
       
     }
@@ -407,8 +414,7 @@ void setup() {
   {
   val[i]= myservo_courrent[i];
   }
-  
-  
+ 
    for (byte i = 0; i < 6; i++)
   {
     
@@ -418,6 +424,27 @@ void setup() {
   
   }
 
+
+  for (size_t i = 0; i < 150; i++)
+  {
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.println(readEEPROM(i,EEPROM_I2C_ADDRESS));
+  }
+  
+byte j=0;
+for (size_t i = 0; i < 25; i++)
+{
+  
+   Servo_sequence[i]= readEEPROM(j,EEPROM_I2C_ADDRESS);
+    Servo1_sequence[i]= readEEPROM(j+1,EEPROM_I2C_ADDRESS);
+    Servo2_sequence[i]= readEEPROM(j+2,EEPROM_I2C_ADDRESS);
+    Servo3_sequence[i]= readEEPROM(j+3,EEPROM_I2C_ADDRESS);
+    Pump_sequence[i]= readEEPROM(j+4,EEPROM_I2C_ADDRESS);
+    Solenoid_sequence[i]=readEEPROM(j+5,EEPROM_I2C_ADDRESS);
+  
+  j=j+6;
+}
   // Set PWM Frequency to 50Hz
   pca9685.setPWMFreq(50);
    
