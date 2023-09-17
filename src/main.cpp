@@ -4,7 +4,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <IRremote.h>
 #include <ModbusRtu.h>
-
+#include "PCF8574.h"
 
  
 #define PWM_Module_I2C 0X40
@@ -22,11 +22,11 @@
 Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver(PWM_Module_I2C);
 LiquidCrystal_I2C lcd(0x3F, lcd_Columns, lcd_Rows);
 DeltaKinematics DK(70,300,139,112);
+PCF8574 pcf8574(0x26);
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 decode_results results;
 Modbus slave(1,Serial,0);
-
 
 unsigned long  previousMillis = 0;
 unsigned long  previousMillis1 = 0;
@@ -39,7 +39,7 @@ byte value[]={90,90,90,90,0,0};// ir value array
 
 
 
-byte machine_step=0;
+byte machine_step=1;
 short delta_x_pos[]={};
 short delta_y_pos[]={};
 short delta_z_pos[]={};
@@ -61,10 +61,13 @@ byte Solenoid_sequence[25]={};
 
 
 void conveyer_relay_on(){
-  digitalWrite(RELAY_PIN,HIGH);
+   pcf8574.digitalWrite(P0, LOW);
+   
+
 }
 void conveyer_relay_off(){
-  digitalWrite(RELAY_PIN,LOW);
+  
+pcf8574.digitalWrite(P0, HIGH);
 }
 
 void Delta_robot_kinematic_logic(){
@@ -124,25 +127,18 @@ byte readEEPROM(int address, int i2c_address)
 }
    
 void Ir_remote_programming(){
+     lcd.setCursor(0, 0);
+     lcd.print("Servo["+String(ir_arr_pos)+ "] Programming");
      lcd.setCursor(0, 1);
      lcd.print(value[ir_arr_pos]);
-     lcd.print(" ");  // to remove 0 bug
+     lcd.print("         Mode  ");  // to remove 0 bug
 
 
 if (IrReceiver.decode()){
-        // Serial.println(IrReceiver.decodedIRData.decodedRawData,HEX);
-        Serial.println("Courrent Servo"+ String(p)+" value:" + String(value[ir_arr_pos]));
-        
-   
-
-
+        // Serial.println(IrReceiver.decodedIRData.decodedRawData,HEX)
        switch (IrReceiver.decodedIRData.decodedRawData)
        {
        case 0x80 :{
-
-      Serial.println("Button is pressed");
-      Serial.println("Saved Servo Values: " + String(value[ir_arr_pos]));
-      Serial.println("Courrent Saving addr:" + String(menory_address) + "-" +String(menory_address+6));
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Saved To memory" );
@@ -160,7 +156,7 @@ if (IrReceiver.decode()){
         } 
         menory_address=menory_address+6;
       }else{
-        Serial.println("Memory filled from 0-149");
+        
       }
       
       delay(50);
@@ -257,7 +253,7 @@ void Task2code( void * pvParameters ){
   for(;;){
     
   slave.poll( au16data, 16 );
-
+  
     vTaskDelay(10);  //https://rntlab.com/question/error-task-watchdog-got-triggered/
   
   }
@@ -273,20 +269,35 @@ void Task1code( void * pvParameters ){
     vTaskDelay(10);               //https://rntlab.com/question/error-task-watchdog-got-triggered/
   unsigned long currentMillis = millis();
 
+  if (runn_once)
+  {
+   bool buttonState = digitalRead(33);
+  if (buttonState){machine_step=0;}
+  runn_once=false;
+  }
+   
 
 
 switch(machine_step){
-   case 0 :{ /*---------------------------------------------------------------------------------------------------*/
+case 0:{
+ Ir_remote_programming();
+}break;
 
-        bool state = digitalRead(Proximity_SENSOR_PIN);
 
-               if (state == LOW){
-               
+   case 1 :{ /*---------------------------------------------------------------------------------------------------*/
+        byte state = digitalRead(Proximity_SENSOR_PIN);
+       
+               if (state == 1){
+                       
+
                 conveyer_relay_on();
-                machine_step++;
+                
              }else{
+                 
+
                   
                   conveyer_relay_off();
+                  machine_step++;
              }
            
  
@@ -299,7 +310,7 @@ switch(machine_step){
 
 
 
-    case 1 :{
+    case 2 :{
 
       /*---------------------------------------------------------------------------------------------------*/
 
@@ -331,11 +342,11 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
       }
   
   p++;
-      Serial.println("------------------");
+     
             delay(500);
       for(byte i=0;i<6;i++){
         
-        Serial.println(myservo_courrent[i]);    
+           
       }
 }
 
@@ -347,29 +358,42 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
 
 
 
-    case 2 :{
+    case 3 :{
 
 
-         bool state = digitalRead(Proximity_SENSOR_PIN);
+        byte state = digitalRead(Proximity_SENSOR_PIN);
 
-               if (state == LOW){
+               if (state == 1){
                
                conveyer_relay_on();
-                digitalWrite(LED_BUILTIN,HIGH);
-                machine_step++;
-                Serial.println("on");
-             }else
-             {
+              
+                
+             }else{
               conveyer_relay_off();
-              Serial.println("off");
-              machine_step=2;
+              machine_step++;
+             
+
              }
              
        
     }break;
 
+    case(4):{
+
+      
+
+
+
+    }break;
+
+    case(100):{
+
+
+    }break;
+
+
     default:{
-       continue;
+       
       
       
     }
@@ -396,14 +420,27 @@ void setup() {
   
   Serial.begin(115200);
   slave.start();
+  pcf8574.pinMode(P0, OUTPUT);
+  pcf8574.pinMode(P1, OUTPUT);
+  pcf8574.pinMode(P2, OUTPUT);
+  pcf8574.pinMode(P3, OUTPUT);
+
+  pcf8574.pinMode(P5,INPUT);
+  pcf8574.pinMode(P6,INPUT);
+
+  pcf8574.begin();
   pca9685.begin();
   IrReceiver.begin(PIN_RECV);
   lcd.init();
-
+  pinMode(33, INPUT_PULLDOWN);
 
   lcd.backlight();
   lcd.setCursor(0,0);
-  lcd.print("S"+String(ir_arr_pos)+": ");
+
+  lcd.print("Runnging on ");
+  lcd.setCursor(0,1);
+  lcd.print("SCADA Mode ");
+ // lcd.print("S"+String(ir_arr_pos)+": ");
 
 
   pinMode(Proximity_SENSOR_PIN, INPUT);
@@ -425,12 +462,7 @@ void setup() {
   }
 
 
-  for (size_t i = 0; i < 150; i++)
-  {
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.println(readEEPROM(i,EEPROM_I2C_ADDRESS));
-  }
+  
   
 byte j=0;
 for (size_t i = 0; i < 25; i++)
