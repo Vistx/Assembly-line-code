@@ -44,7 +44,7 @@ short delta_x_pos[]={};
 short delta_y_pos[]={};
 short delta_z_pos[]={};
 
-uint16_t au16data[16] = {3, 1415, 9265, 4, 2, 7182, 28182, 8, 0, 0, 0, 0, 0, 0, 1, 1};
+uint16_t au16data[16] = {0, 0, 0, 0, 0, 0, 0, 90, 90, 90, 90, 0, 0, 0, 1, 1};
 byte pca_servo_ports[6]={0,4,8,12,14,15};
 byte myservo_courrent[6] ={90,90,90,90,0,0};
 unsigned short int pwm_signal[6]={1,1,1,1,1,1};
@@ -208,8 +208,19 @@ if (IrReceiver.decode()){
        default:
         break;
        }
+for (byte i = 0; i < 4; i++)
+  {
+    au16data[i+7]=value[i];
+  }
+
+  au16data[3]=value[4];
+  au16data[4]=value[5];
+
+
+
       for (byte i = 0; i < 6; i++)
   {
+
     
     pwm_signal[i]=map( value[i], 0, 180, SERVOMIN, SERVOMAX);
     pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
@@ -289,14 +300,16 @@ case 0:{
        
                if (state == 1){
                        
-
+               au16data[5]=0;
                 conveyer_relay_on();
+                au16data[2]=1;
                 
              }else{
                  
 
-                  
+                  au16data[2]=0;
                   conveyer_relay_off();
+                  au16data[5]=1;
                   machine_step++;
              }
            
@@ -329,6 +342,20 @@ case 0:{
 
 for (byte i = 0; i < 6; i++)
   {
+    if (i<4)
+    {
+      au16data[i+7]=myservo_courrent[i];
+    }
+    if (i==4)
+    {
+       au16data[3]=myservo_courrent[4];
+    }
+    if (i==5)
+    {
+      au16data[4]=myservo_courrent[5];
+    }
+    
+    
     
     pwm_signal[i]=map( myservo_courrent[i], 0, 180, SERVOMIN, SERVOMAX);
     pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
@@ -364,12 +391,17 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
         byte state = digitalRead(Proximity_SENSOR_PIN);
 
                if (state == 1){
-               
-               conveyer_relay_on();
+                
+                
+                au16data[5]=0;
+                conveyer_relay_on();
+                au16data[2]=1;
               
                 
              }else{
+              au16data[2]=0;
               conveyer_relay_off();
+              au16data[5]=1;
               machine_step++;
              
 
