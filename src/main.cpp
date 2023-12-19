@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <Adafruit_PWMServoDriver.h>
-
 #include <LiquidCrystal_I2C.h>
 #include <IRremote.h>
 #include <ModbusRtu.h>
@@ -40,15 +39,7 @@ byte p=0,    ir_arr_pos=0; // sequence,step180
 byte servo_sequence_count_eeprom=0;
 int Sequence_eeprom_memory_addr=32000; 
 byte get_last_step_from_eeprom=0;
-
-
-
 byte machine_step=1;
-short delta_x_pos[]={};
-short delta_y_pos[]={};
-short delta_z_pos[]={};
-
-
 byte value[]={90,90,90,90,0,0};// ir value array
 uint16_t au16data[16] = {0, 0, 0, 0, 0, 0, 0, 90, 90, 90, 90, 0, 0, 0, 1, 1};
 byte pca_servo_ports[6]={0,4,8,12,14,15};
@@ -73,7 +64,7 @@ byte _2dof_step=0;
 
 
 void conveyer_relay_on(){
-   pcf8574.digitalWrite(P0, LOW);
+   pcf8574.digitalWrite(P0, LOW); //Low becaouse of I2c Binay composition
 }
 
 void conveyer_relay_off(){
@@ -95,7 +86,7 @@ void Pump_2 (String _state ){
 }
 
 
-void writeEEPROM(int address, byte val, int i2c_address)
+void writeEEPROM(int address, byte val, int i2c_address) //https://dronebotworkshop.com/eeprom-arduino/
 {
   // Begin transmission to I2C EEPROM
   Wire.beginTransmission(i2c_address);
@@ -151,7 +142,7 @@ if (IrReceiver.decode()){
         // Serial.println(IrReceiver.decodedIRData.decodedRawData,HEX)
        switch (IrReceiver.decodedIRData.decodedRawData)
        {
-       case 0x80 :{
+       case 0x80 :{ //ir codes decoded from the remote
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Saved To memory" );
@@ -162,7 +153,7 @@ if (IrReceiver.decode()){
       lcd.setCursor(0,0);
       lcd.print("S"+String(p)+": ");
       digitalWrite(LED_BUILTIN,HIGH);
-      if (menory_address<150){
+      if (menory_address<150){ //save to eeprom array
         for (size_t i = 0; i < 6; i++)
         {
           writeEEPROM(menory_address+i , value[i], EEPROM_I2C_ADDRESS);
@@ -193,8 +184,6 @@ if (IrReceiver.decode()){
         {
           value[ir_arr_pos]=115;
         }
-
-
 
        }break;
 
@@ -247,9 +236,6 @@ if (ir_arr_pos==4)
       lcd.print(String(servo_sequence_count_eeprom));
            
       }break;
-
-
-
        default:
         break;
        }
@@ -277,19 +263,9 @@ for (byte i = 0; i < 4; i++)
     pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);}
 
 
-  }
-
-
-
-                                                            // if (IrReceiver.decodedIRData.decodedRawData==0x80){}
-        
+  } // if (IrReceiver.decodedIRData.decodedRawData==0x80){}        
         IrReceiver.resume();
-
-
   }
-
-
-
 
 }
 
@@ -329,7 +305,7 @@ void _4dof_servo_movement(byte i,byte* _Servo_sequence ){ //https://www.tutorial
  
 /*<-----Funksionet----->*/
 
-void Task2code( void * pvParameters ){
+void Task2code( void * pvParameters ){ //commuicate with the RTU
   
 
   for(;;){
@@ -340,8 +316,6 @@ void Task2code( void * pvParameters ){
   
   }
 }
-
-
 
 void Task1code( void * pvParameters ){
   
@@ -390,10 +364,6 @@ case 0:{
  
    }break;/*---------------------------------------------------------------------------------------------------*/
 
-
-
-
-
     case(2):{
 
       if(_2dof_step>=sizeof(&_2dof_servo_sequence0)){
@@ -407,8 +377,6 @@ case 0:{
   if (currentMillis1 - previousMillis2 >= interval_2dof) {previousMillis2 = currentMillis1;
   _2dof_servo_movement(0 , &_2dof_servo_sequence0[_2dof_step]);
   _2dof_servo_movement(1 , &_2dof_servo_sequence1[_2dof_step]);}
-
-  
 
 
   for (byte i = 0; i < 2; i++)
@@ -436,10 +404,7 @@ case 0:{
   }
     }break;
 
-   
-
     case 3 :{
-
 
         byte state = digitalRead(26);
 
@@ -490,7 +455,7 @@ case 4 :{
          myservo_courrent[5]=Solenoid_sequence[p];
       }
 
-
+//Comunicate servo positions to the Software
 for (byte i = 0; i < 6; i++)
   {
     if (i<4)
@@ -517,12 +482,9 @@ for (byte i = 0; i < 6; i++)
 
 
     }
-
-    
-   
   }
 
-
+///verify if the 4dof servos have rached the position
 if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived_todestination[2]&&servo_arvived_todestination[3]){
   for(byte i=0;i<4;i++){
         
@@ -532,50 +494,26 @@ if(servo_arvived_todestination[0]&&servo_arvived_todestination[1]&&servo_arvived
   p++;
      
             delay(500);
-      for(byte i=0;i<6;i++){
-        
-           
+      for(byte i=0;i<6;i++){//for debuging  purpose
       }
 }
-
-
 /*---------------------------------------------------------------------------------------------*/
      }break;
-
-
-
-
-
-
     default:{
        
       vTaskDelay(10);
       
     }
-
-
 }
-
-    
-
-
-
-
-
-
 //------------------ending bracket----------------------------
   } 
 }
-
-
-
-
 
 void setup() { 
   
   Serial.begin(115200);
   slave.start();
-  pcf8574.pinMode(P0, OUTPUT);
+  pcf8574.pinMode(P0, OUTPUT); //i2c demultiplex pins
   pcf8574.pinMode(P1, OUTPUT);
   pcf8574.pinMode(P2, OUTPUT);
   pcf8574.pinMode(P3, OUTPUT);
@@ -584,7 +522,7 @@ void setup() {
   pca9685.begin();
   IrReceiver.begin(PIN_RECV);
   lcd.init();
-  pinMode(33, INPUT_PULLDOWN);
+  pinMode(33, INPUT_PULLDOWN); //Microcontroller Mode
 
   lcd.backlight();
   lcd.setCursor(0,0);
@@ -606,12 +544,9 @@ void setup() {
   }
  
    for (byte i = 0; i < 6; i++)
-  {
-    
+  {  
     pwm_signal[i]=map(val[i], 0, 180, SERVOMIN, SERVOMAX);
     pca9685.setPWM(pca_servo_ports[i], 0, pwm_signal[i]);
-  
-  
   }
 
    for (byte i = 0; i < 2; i++)
@@ -619,9 +554,6 @@ void setup() {
     pca9685.setPWM(_2dof_pca_servo_ports[i], 0, map(myservo_courrent_2dof[i], 0, 180, SERVOMIN, SERVOMAX));
   }
 
-
-  
-  
 byte j=0;
 for (size_t i = 0; i < 25; i++)
 {
@@ -640,7 +572,7 @@ get_last_step_from_eeprom=readEEPROM(Sequence_eeprom_memory_addr,EEPROM_I2C_ADDR
 
   // Set PWM Frequency to 50Hz
   pca9685.setPWMFreq(50);
-   
+   //https://wokwi.com/projects/384350947215370241
   //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
   xTaskCreatePinnedToCore(
                     Task1code,   /* Task function. */
@@ -663,12 +595,6 @@ get_last_step_from_eeprom=readEEPROM(Sequence_eeprom_memory_addr,EEPROM_I2C_ADDR
                     1);          /* pin task to core 1 */
     delay(500); 
 }
-
-
-
-
-
-
 void loop() {
   
 }
