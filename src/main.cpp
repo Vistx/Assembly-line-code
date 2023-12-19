@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Adafruit_PWMServoDriver.h>
-#include <DeltaKinematics.h>
+
 #include <LiquidCrystal_I2C.h>
 #include <IRremote.h>
 #include <ModbusRtu.h>
@@ -21,7 +21,6 @@
 
 Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver(PWM_Module_I2C);
 LiquidCrystal_I2C lcd(0x3F, lcd_Columns, lcd_Rows);
-DeltaKinematics DK(70,300,139,112);
 PCF8574 pcf8574(0x26);
 TaskHandle_t Task1;
 TaskHandle_t Task2;
@@ -75,11 +74,9 @@ byte _2dof_step=0;
 
 void conveyer_relay_on(){
    pcf8574.digitalWrite(P0, LOW);
-   
-
 }
+
 void conveyer_relay_off(){
-  
 pcf8574.digitalWrite(P0, HIGH);
 }
 
@@ -97,24 +94,6 @@ void Pump_2 (String _state ){
   
 }
 
-
-
-
-
-
-
-
-void Delta_robot_kinematic_logic(){
-
-  for (size_t i = 0; i <  sizeof(delta_x_pos) / sizeof(short); i++)
-  {
-    DK.inverse(delta_x_pos[i],delta_y_pos[i],delta_z_pos[i]);
-    delay(200);
-  }
-  
-
-
-}
 
 void writeEEPROM(int address, byte val, int i2c_address)
 {
