@@ -34,7 +34,7 @@ const long interval2 = 1500;
 const long interval_2dof = 50;
 
 bool runn_once = true;
-int menory_address=0;
+int memory_address=0;
 byte p=0,    ir_arr_pos=0; // sequence,step180
 byte servo_sequence_count_eeprom=0;
 int Sequence_eeprom_memory_addr=32000; 
@@ -147,18 +147,18 @@ if (IrReceiver.decode()){
       lcd.setCursor(0,0);
       lcd.print("Saved To memory" );
       lcd.setCursor(0,1);
-      lcd.print("Adress: "+ String(menory_address)+ "-" +String(menory_address+6) );
+      lcd.print("Adress: "+ String(memory_address)+ "-" +String(memory_address+6) );
       delay(1500);
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("S"+String(p)+": ");
       digitalWrite(LED_BUILTIN,HIGH);
-      if (menory_address<150){ //save to eeprom array
+      if (memory_address<150){ //save to eeprom array
         for (size_t i = 0; i < 6; i++)
         {
-          writeEEPROM(menory_address+i , value[i], EEPROM_I2C_ADDRESS);
+          writeEEPROM(memory_address+i , value[i], EEPROM_I2C_ADDRESS);
         } 
-        menory_address=menory_address+6;
+        memory_address=memory_address+6;
         servo_sequence_count_eeprom=servo_sequence_count_eeprom+1;
 
       }else{
